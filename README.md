@@ -1,5 +1,4 @@
 ## Jason R. Schmidt Avendaño
-![Lab Website](https://cdn.aarp.net/content/dam/aarp/travel/tips/2020/12/1140-las-vegas-sign.jpg)
 
 ### Introduction
 My name is **Jason R. Schmidt Avendaño**. This is a data report of a study that aimed to look at the research question; Do individuals with large spelling ability, have shorter gaze duration for low frequency words than individuals who have small spelling ability? 
