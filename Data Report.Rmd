@@ -1,0 +1,102 @@
+---
+title: "Data Report"
+output: word_document
+date: "`r format(Sys.time(), '%d %B %Y')`"
+Name: Jason Schmidt Avendaño 
+---
+```{r, Core play}
+options(
+   mc.cores = parallel::detectCores(),
+   stan.backend = "cmdstanr"
+)
+```
+
+```{r, Setup}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, Load}
+library(tidyverse) #need ddplyr
+library(rstanarm) #stan_glm
+library(easystats)
+library(glmmTMB)
+library(brms)
+```
+
+```{r, Data}
+dat_freq <- read.csv(here::here("Homework","H_9","CB_frequency_data.csv"))
+```
+
+Variables: 
+   - Subject: Unique participant ID
+   - High: The gaze duration for words that are commonly appearing in the English Language 
+   - Low: The gaze duration for words that are uncommonly appearing in the English Language 
+   - Freq Effect: Low words minus High
+   - Vocab: Based on an Vocab Comprehension Assessment these scores indicate an individuals vocab ability. The          score ranges from 0 - 40. High scores illustrate an individual with a well defined vocab span. 
+
+1. Research question/hypothesis.
+##Do individuals with large spelling ability, have shorter gaze duration for low frequency words than individuals who have small spelling ability? 
+
+2. Causal model for your variables.
+##Having a large spelling ability causes shorter fixation duration for low frequency words, thus showing small gaze duration times. 
+
+Important confounders, mediators, colliders, or other parts of the model?
+##An important confounder that needs to be accounted for is the individuals Vocab ability. Vocab ability effects spelling ability but also effects gaze duration thus creating a back door. 
+
+Variables need to control for?
+##Vocab ability 
+
+Potential confounders you can't control for because they aren't in your dataset?
+##SES isnt normally obtained in eye movement experiments because oculomotor systems are unaffected by society pressure. However, spelling ability might differ across SES levels and would have been nice to control for. 
+ 
+ 3. Specify a regression model to estimate your causal effect 
+ 
+ $$Gaze Duration ∼ Normal(μ_i, σ)$$
+
+  $$μ_i = β_0 + β_1 × Spelling Ability + β_2 × Vocab Ability$$
+ 
+ 4. Why this model specification (e.g., predictors chosen, functional form [linear, multiplicative, curvilinear, modeling just the mean or both mean and sigma, no/complete/partial pooling, etc.]) is appropriate.
+
+##This model shows that we are predicitng gaze duration using an individuals spelling ability when controlling for vocab ability. This is appropriate becuase the literature states that spelling ability is a accurate predictor of reading efficienciy. Vocab ability is also a predictor often used however in this model i want to only account for the varaince induced by spelling ability and thus am controlling for vocab ability. I beleve the realtionship to be linear showing that as individuals spelling ability scores increase there gaze duration will get shorter (lower scores). 
+ 
+ 5. Estimate your chosen model and do appropriate diagnostics.
+
+```{r}
+ggplot(data = dat_freq, 
+       mapping = aes(x = Low)) +
+  geom_histogram(alpha = 0.8)
+
+ggplot(data = dat_freq, 
+       mapping = aes(x = Spelling)) +
+  geom_histogram(alpha = 0.8)
+```
+
+```{r, Model Fit}
+mod_gaze <- stan_glm(
+  Low ~ Spelling + Vocabulary,
+  data = dat_freq
+) 
+```
+    
+```{r, Parameters}
+parameters(mod_gaze)
+
+check_predictions(mod_gaze)
+
+check_model(mod_gaze)
+```
+
+```{r, Vizzy Gaze}
+dat_freq %>% 
+   ggplot() + 
+   aes(x = Spelling, y = Low) + 
+   geom_point()
+```
+ 6. The results of your final model and interpret them.
+    Implications for your research question?
+
+##The final model illustrates the relationship of between spelling ability and gaze duration of low frequency words, when controlling for Vocab ability. The model parameters show a negative relationship which is what was expected. For every 1 point increase on the spelling ability assessment an individuals gaze duration for low frequency words decreases by 3.45 seconds with CI of (-7.02 - .01). This data supports the hypothesis that individuals with higher spelling ability scores will have shorter fixation duration for low frequency words. Individuals with higher spelling abilities need less time to fixate on low frequency words in order to obtain semantic and syntactic information. The extreme CI ranges (-7.02 - .01) do however seem to be an indicator of model issues. I however bring the point of sample size and measure of the gaze duration variable. Seconds in reading are often times widely varying across individual difference in terms of how long a person fixates when they come to a low frequent word. Many things effect this such as if this is the first time they have ever seen the word, if they can pronounce the word, and if they know what the definition of the word is. All of these factors are seen in the CI ranges for the spelling ability parameter. ranging from 7 to 1 second across only 51 participants can not precisely account for the variance. By increasing sample size the confidence in the prediction power of spelling ability will drastically increase. 
+    
+ 7. Limitations of your model for answering your research question?
+ 
+##Based on wide uncertaininity I decided to run a correlation test. Running correlation between the two assessments Spelling and Vocabulary show that the two are correlated above .50. This means that a better model might be to use both of the abilities to predict gaze duration of low frequency words rather than just controlling for the other one.
